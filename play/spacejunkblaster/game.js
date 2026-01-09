@@ -127,6 +127,20 @@ function toggleMusic() {
     }
 }
 
+function startMusic() {
+    if (!bgMusic) return;
+    if (!musicPlaying) {
+        bgMusic.play().then(() => {
+            musicPlaying = true;
+        }).catch(() => {
+            // Autoplay blocked, will start on user interaction
+        });
+    }
+}
+
+// Try to auto-start music when page loads
+window.addEventListener('load', startMusic);
+
 function windowResized() {
     resizeCanvas(windowWidth, windowHeight);
     satellite.x = width / 2;

@@ -48,6 +48,17 @@ function initMusic() {
     }
 }
 
+function startMusic() {
+    initMusic();
+    if (!musicPlaying) {
+        bgMusic.play().then(() => {
+            musicPlaying = true;
+        }).catch(() => {
+            // Autoplay blocked, will start on user interaction
+        });
+    }
+}
+
 function toggleMusic() {
     initMusic();
     if (musicPlaying) {
@@ -58,6 +69,9 @@ function toggleMusic() {
         musicPlaying = true;
     }
 }
+
+// Try to auto-start music
+document.addEventListener('DOMContentLoaded', startMusic);
 
 function playSound(type) {
     if (!audioCtx) return;

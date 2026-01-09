@@ -78,11 +78,20 @@
     <audio id="bgMusic" loop>
         <source src="music/arcade-dance.mp3" type="audio/mpeg">
     </audio>
-    <button id="musicToggle" class="music-btn">MUSIC: OFF</button>
+    <button id="musicToggle" class="music-btn">MUSIC: ON</button>
     <script>
         const music = document.getElementById('bgMusic');
         const btn = document.getElementById('musicToggle');
         music.volume = 0.4;
+
+        // Try to auto-play music
+        btn.classList.add('playing');
+        music.play().catch(() => {
+            // Autoplay blocked by browser, update button state
+            btn.textContent = 'MUSIC: OFF';
+            btn.classList.remove('playing');
+        });
+
         btn.addEventListener('click', () => {
             if (music.paused) {
                 music.play();
