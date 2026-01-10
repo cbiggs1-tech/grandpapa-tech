@@ -84,8 +84,6 @@
         const btn = document.getElementById('musicToggle');
         music.volume = 0.4;
 
-        // Check if user has explicitly turned off music
-        const userWantsMusic = localStorage.getItem('grandpapaMusicOff') !== 'true';
         let autoplayBlocked = false;
 
         function updateButtonState(playing) {
@@ -98,42 +96,41 @@
             }
         }
 
-        function tryPlayMusic() {
-            if (!userWantsMusic && localStorage.getItem('grandpapaMusicOff') === 'true') return;
-            music.play().then(() => {
-                updateButtonState(true);
-                autoplayBlocked = false;
-            }).catch(() => {
-                autoplayBlocked = true;
-                updateButtonState(false);
-            });
-        }
-
-        // Try to auto-play music on load (default is ON)
-        if (userWantsMusic) {
-            tryPlayMusic();
-        } else {
-            updateButtonState(false);
-        }
+        // Always try to play music on page load (default is ON)
+        music.play().then(() => {
+            updateButtonState(true);
+        }).catch(() => {
+            autoplayBlocked = true;
+            // Still show ON since that's the intended state
+            updateButtonState(true);
+        });
 
         // If autoplay was blocked, start music on first user interaction
-        document.addEventListener('click', function startMusicOnInteraction() {
-            if (autoplayBlocked && localStorage.getItem('grandpapaMusicOff') !== 'true') {
-                tryPlayMusic();
+        document.addEventListener('click', function startMusicOnInteraction(e) {
+            if (e.target === btn) return; // Let button handler deal with it
+            if (autoplayBlocked) {
+                music.play().then(() => {
+                    autoplayBlocked = false;
+                    updateButtonState(true);
+                });
             }
-            document.removeEventListener('click', startMusicOnInteraction);
         }, { once: true });
 
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent the document click handler
+        btn.addEventListener('click', () => {
             if (music.paused) {
-                localStorage.removeItem('grandpapaMusicOff');
                 music.play();
                 updateButtonState(true);
+                autoplayBlocked = false;
             } else {
-                localStorage.setItem('grandpapaMusicOff', 'true');
                 music.pause();
                 updateButtonState(false);
+            }
+        });
+
+        // ESC key to go to games page
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                window.location.href = 'games.html';
             }
         });
     </script>
