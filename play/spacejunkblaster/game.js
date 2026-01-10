@@ -2909,8 +2909,18 @@ function keyPressed() {
         return;
     }
 
+    // ESC during gameplay returns to menu
+    if (gameState === 'PLAYING' && keyCode === ESCAPE) {
+        gameState = 'MENU';
+        return;
+    }
+
     if (gameState === 'MENU') {
-        if (keyCode === UP_ARROW) {
+        if (keyCode === ESCAPE) {
+            // Return to games page
+            window.location.href = '../../games.html';
+            return;
+        } else if (keyCode === UP_ARROW) {
             currentPlayer = (currentPlayer - 1 + 4) % 4;
             playBeep(330, 0.1);
         } else if (keyCode === DOWN_ARROW) {

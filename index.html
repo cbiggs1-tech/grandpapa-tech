@@ -84,23 +84,56 @@
         const btn = document.getElementById('musicToggle');
         music.volume = 0.4;
 
-        // Try to auto-play music
-        btn.classList.add('playing');
-        music.play().catch(() => {
-            // Autoplay blocked by browser, update button state
-            btn.textContent = 'MUSIC: OFF';
-            btn.classList.remove('playing');
-        });
+        // Check if user has explicitly turned off music
+        const userWantsMusic = localStorage.getItem('grandpapaMusicOff') !== 'true';
+        let autoplayBlocked = false;
 
-        btn.addEventListener('click', () => {
-            if (music.paused) {
-                music.play();
+        function updateButtonState(playing) {
+            if (playing) {
                 btn.textContent = 'MUSIC: ON';
                 btn.classList.add('playing');
             } else {
-                music.pause();
                 btn.textContent = 'MUSIC: OFF';
                 btn.classList.remove('playing');
+            }
+        }
+
+        function tryPlayMusic() {
+            if (!userWantsMusic && localStorage.getItem('grandpapaMusicOff') === 'true') return;
+            music.play().then(() => {
+                updateButtonState(true);
+                autoplayBlocked = false;
+            }).catch(() => {
+                autoplayBlocked = true;
+                updateButtonState(false);
+            });
+        }
+
+        // Try to auto-play music on load (default is ON)
+        if (userWantsMusic) {
+            tryPlayMusic();
+        } else {
+            updateButtonState(false);
+        }
+
+        // If autoplay was blocked, start music on first user interaction
+        document.addEventListener('click', function startMusicOnInteraction() {
+            if (autoplayBlocked && localStorage.getItem('grandpapaMusicOff') !== 'true') {
+                tryPlayMusic();
+            }
+            document.removeEventListener('click', startMusicOnInteraction);
+        }, { once: true });
+
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent the document click handler
+            if (music.paused) {
+                localStorage.removeItem('grandpapaMusicOff');
+                music.play();
+                updateButtonState(true);
+            } else {
+                localStorage.setItem('grandpapaMusicOff', 'true');
+                music.pause();
+                updateButtonState(false);
             }
         });
     </script>

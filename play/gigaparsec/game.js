@@ -262,6 +262,36 @@ document.addEventListener('keydown', (e) => {
         return;
     }
 
+    // ESC handling
+    if (e.key === 'Escape') {
+        if (gameState === GameState.PLAYING) {
+            // Return to menu from gameplay
+            gameState = GameState.MENU;
+            document.getElementById('start-screen').classList.remove('hidden');
+            // Reset game state
+            score = 0;
+            lives = 3;
+            level = 1;
+            player.x = 100;
+            player.y = canvas.height / 2;
+            player.powerLevel = 1;
+            enemies = [];
+            bullets = [];
+            particles = [];
+            asteroids = [];
+            powerUps = [];
+        } else if (gameState === GameState.MENU) {
+            // Return to games page from menu
+            window.location.href = '../../games.html';
+        } else if (gameState === GameState.GAME_OVER) {
+            // Return to menu from game over
+            gameState = GameState.MENU;
+            document.getElementById('game-over').classList.add('hidden');
+            document.getElementById('start-screen').classList.remove('hidden');
+        }
+        return;
+    }
+
     if (e.code === 'Space') {
         if (gameState === GameState.MENU) {
             startGame();
