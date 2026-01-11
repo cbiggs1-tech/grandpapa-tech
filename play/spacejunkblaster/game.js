@@ -141,6 +141,47 @@ function startMusic() {
 // Try to auto-start music when page loads
 window.addEventListener('load', startMusic);
 
+// Screenshot functionality
+let screenshotMsg = false;
+let screenshotMsgTimer = 0;
+
+function takeScreenshot() {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const canvas = document.querySelector('canvas');
+
+    // Create full-size JPG
+    const jpgDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+    downloadImage(jpgDataUrl, `spacejunkblaster-${timestamp}.jpg`);
+
+    // Create thumbnail PNG (200x150)
+    const thumbCanvas = document.createElement('canvas');
+    thumbCanvas.width = 200;
+    thumbCanvas.height = 150;
+    const thumbCtx = thumbCanvas.getContext('2d');
+    thumbCtx.imageSmoothingEnabled = false; // Keep pixelated look
+    thumbCtx.drawImage(canvas, 0, 0, 200, 150);
+    const pngDataUrl = thumbCanvas.toDataURL('image/png');
+    downloadImage(pngDataUrl, `spacejunkblaster-thumb-${timestamp}.png`);
+
+    // Show screenshot flash effect
+    showScreenshotFlash();
+}
+
+function downloadImage(dataUrl, filename) {
+    const link = document.createElement('a');
+    link.href = dataUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function showScreenshotFlash() {
+    // Show "SCREENSHOT SAVED" message
+    screenshotMsg = true;
+    screenshotMsgTimer = 90; // About 1.5 seconds at 60fps
+}
+
 function windowResized() {
     resizeCanvas(windowWidth, windowHeight);
     satellite.x = width / 2;
@@ -1345,6 +1386,29 @@ function draw() {
 
     // Update gamepad button states at end of frame (for edge detection)
     updateGamepadButtonStates();
+
+    // Show screenshot message if active
+    if (screenshotMsg && screenshotMsgTimer > 0) {
+        screenshotMsgTimer--;
+        if (screenshotMsgTimer <= 0) {
+            screenshotMsg = false;
+        } else {
+            push();
+            fill(0, 0, 0, 180);
+            rectMode(CENTER);
+            rect(width/2, height/2, 320, 50, 5);
+            stroke(0, 255, 0);
+            strokeWeight(2);
+            noFill();
+            rect(width/2, height/2, 320, 50, 5);
+            noStroke();
+            fill(0, 255, 0);
+            textAlign(CENTER, CENTER);
+            textSize(16);
+            text('SCREENSHOT SAVED!', width/2, height/2);
+            pop();
+        }
+    }
 }
 
 // Initialize Milky Way galaxy background
@@ -2907,6 +2971,12 @@ function keyPressed() {
     if (key === 'm' || key === 'M') {
         toggleMusic();
         return;
+    }
+
+    // Screenshot - P key or F9 (F12 often opens dev tools)
+    if (key === 'p' || key === 'P' || keyCode === 120) { // 120 = F9
+        takeScreenshot();
+        return false; // Prevent default
     }
 
     // ESC during gameplay returns to menu

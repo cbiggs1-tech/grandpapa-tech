@@ -70,6 +70,54 @@ function toggleMusic() {
     }
 }
 
+// Screenshot functionality
+function takeScreenshot() {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+
+    // Create full-size JPG
+    const jpgDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+    downloadImage(jpgDataUrl, `gigaparsec-${timestamp}.jpg`);
+
+    // Create thumbnail PNG (200x150)
+    const thumbCanvas = document.createElement('canvas');
+    thumbCanvas.width = 200;
+    thumbCanvas.height = 150;
+    const thumbCtx = thumbCanvas.getContext('2d');
+    thumbCtx.imageSmoothingEnabled = false; // Keep pixelated look
+    thumbCtx.drawImage(canvas, 0, 0, 200, 150);
+    const pngDataUrl = thumbCanvas.toDataURL('image/png');
+    downloadImage(pngDataUrl, `gigaparsec-thumb-${timestamp}.png`);
+
+    // Show screenshot flash effect
+    showScreenshotFlash();
+}
+
+function downloadImage(dataUrl, filename) {
+    const link = document.createElement('a');
+    link.href = dataUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function showScreenshotFlash() {
+    // Brief white flash to indicate screenshot taken
+    ctx.save();
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.restore();
+
+    // Show "SCREENSHOT SAVED" message
+    setTimeout(() => {
+        const originalDraw = window.screenshotMsg;
+        window.screenshotMsg = true;
+        setTimeout(() => {
+            window.screenshotMsg = false;
+        }, 1500);
+    }, 50);
+}
+
 // Try to auto-start music
 document.addEventListener('DOMContentLoaded', startMusic);
 
@@ -259,6 +307,13 @@ document.addEventListener('keydown', (e) => {
     // Music toggle works in any state
     if (e.key === 'm' || e.key === 'M') {
         toggleMusic();
+        return;
+    }
+
+    // Screenshot - P key or F9 (F12 often opens dev tools)
+    if (e.key === 'p' || e.key === 'P' || e.key === 'F9') {
+        e.preventDefault();
+        takeScreenshot();
         return;
     }
 
@@ -1022,6 +1077,20 @@ function gameLoop() {
 
         // Update UI
         updateUI();
+    }
+
+    // Show screenshot message if active
+    if (window.screenshotMsg) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(canvas.width/2 - 150, canvas.height/2 - 20, 300, 40);
+        ctx.strokeStyle = '#0f0';
+        ctx.strokeRect(canvas.width/2 - 150, canvas.height/2 - 20, 300, 40);
+        ctx.fillStyle = '#0f0';
+        ctx.font = '16px "Press Start 2P", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('SCREENSHOT SAVED!', canvas.width/2, canvas.height/2 + 6);
+        ctx.restore();
     }
 
     requestAnimationFrame(gameLoop);
