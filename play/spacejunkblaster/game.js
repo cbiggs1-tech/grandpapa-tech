@@ -2298,13 +2298,26 @@ function updateGame() {
 
     // Touch controls (mobile)
     if (isMobile && touchInput.active) {
-        // Use joystick to aim satellite
-        if (abs(touchInput.moveX) > 0.1 || abs(touchInput.moveY) > 0.1) {
+        // Use joystick to aim and thrust satellite
+        let joystickMagnitude = sqrt(touchInput.moveX * touchInput.moveX + touchInput.moveY * touchInput.moveY);
+        if (joystickMagnitude > 0.1) {
+            // Aim towards joystick direction
             let targetAngle = atan2(touchInput.moveY, touchInput.moveX);
             let angleDiff = targetAngle - satellite.angle;
             while (angleDiff > PI) angleDiff -= TWO_PI;
             while (angleDiff < -PI) angleDiff += TWO_PI;
             satellite.angle += angleDiff * 0.12;
+
+            // Apply thrust proportional to joystick push
+            let thrustAmount = joystickMagnitude * satellite.thrustPower * 0.8;
+            satellite.vx += cos(targetAngle) * thrustAmount;
+            satellite.vy += sin(targetAngle) * thrustAmount;
+
+            // Visual thruster effect
+            if (joystickMagnitude > 0.3) {
+                spawnThrusterParticle(targetAngle + PI, joystickMagnitude);
+                thrusting = true;
+            }
         }
     }
 
@@ -3228,9 +3241,12 @@ function setupThrustButton() {
         touchInput.thrust = true;
         thrustButton.classList.add('active');
 
+        // Initialize audio on first touch (required for mobile browsers)
+        if (!audioCtx) initAudio();
+        if (!musicPlaying) startMusic();
+
         // Start game from menu on thrust button tap
         if (gameState === 'MENU') {
-            initAudio();
             startGame();
         }
     }
@@ -3263,9 +3279,12 @@ function setupFireButton() {
         touchInput.fire = true;
         fireButton.classList.add('active');
 
+        // Initialize audio on first touch (required for mobile browsers)
+        if (!audioCtx) initAudio();
+        if (!musicPlaying) startMusic();
+
         // Handle game state changes
         if (gameState === 'MENU') {
-            initAudio();
             startGame();
         } else if (gameState === 'GAMEOVER') {
             if (highScores.length < 10 || score > highScores[highScores.length - 1].score) {
