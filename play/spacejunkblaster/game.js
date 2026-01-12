@@ -2864,7 +2864,7 @@ function drawGame() {
         }
     }
 
-    // Draw satellite (Starlink style)
+    // Draw satellite
     push();
     translate(satellite.x, satellite.y);
     rotate(satellite.angle);
@@ -2873,72 +2873,29 @@ function drawGame() {
     let heatTint = burningUp ? 150 : 0;
     let panelDamage = burningUp ? (180 - burnupTimer) / 180 : 0;
 
-    // Large single solar panel array (Starlink's distinctive design)
+    // Solar panels (may be burning off)
     if (panelDamage < 0.5) {
-        // Panel extends to one side (perpendicular to direction)
-        push();
-        // Solar panel - dark blue/black photovoltaic cells
-        fill(20 + heatTint * 0.3, 30 + heatTint * 0.2, 50 - panelDamage * 50);
-        stroke(60 + heatTint, 70, 100 - panelDamage * 80);
+        fill(40 + heatTint, 40, 80 - panelDamage * 80);
+        stroke(100 + heatTint, 100, 150 - panelDamage * 100);
         strokeWeight(1);
-        // Main panel extending upward from body
-        rect(-6, -55, 12, 45 * (1 - panelDamage));
+        rect(-8, -35, 16, 25 * (1 - panelDamage));
+        rect(-8, 10, 16, 25 * (1 - panelDamage));
 
-        // Panel cell grid pattern
-        stroke(40 + heatTint * 0.3, 50, 80);
-        strokeWeight(0.5);
-        for (let py = -53; py < -12 - panelDamage * 40; py += 7) {
-            line(-4, py, 4, py);
+        // Panel lines
+        stroke(60 + heatTint * 0.5, 60, 100);
+        for (let py = -33; py < -10 - panelDamage * 20; py += 5) {
+            line(-6, py, 6, py);
         }
-        for (let px = -4; px <= 4; px += 4) {
-            line(px, -53, px, -12 - panelDamage * 40);
+        for (let py = 12; py < 33 - panelDamage * 20; py += 5) {
+            line(-6, py, 6, py);
         }
-
-        // Panel arm/hinge
-        fill(100 + heatTint, 100, 100);
-        stroke(80 + heatTint);
-        strokeWeight(1);
-        rect(-2, -12, 4, 4);
-        pop();
     }
 
-    // Main flat body (Starlink chassis - rectangular)
-    fill(200 + heatTint * 0.3, 200 - heatTint * 0.3, 200 - heatTint * 0.5);
-    stroke(120 + heatTint, 120 - heatTint * 0.3, 120 - heatTint * 0.5);
+    // Body (glows hot during burnup)
+    fill(180 + heatTint * 0.5, 180 - heatTint * 0.5, 180 - heatTint);
+    stroke(100 + heatTint, 100 - heatTint * 0.3, 100 - heatTint * 0.5);
     strokeWeight(2);
-    // Flat rectangular body
-    beginShape();
-    vertex(-12, -8);
-    vertex(10, -8);
-    vertex(12, -6);
-    vertex(12, 6);
-    vertex(10, 8);
-    vertex(-12, 8);
-    endShape(CLOSE);
-
-    // Phased array antenna (flat panel on top side of body)
-    fill(40 + heatTint, 40, 50);
-    stroke(80 + heatTint);
-    strokeWeight(1);
-    rect(-10, 8, 18, 6);
-    // Antenna grid pattern
-    stroke(60 + heatTint, 60, 70);
-    strokeWeight(0.5);
-    for (let i = -8; i <= 6; i += 4) {
-        line(i, 9, i, 13);
-    }
-
-    // Body details - white SpaceX logo area
-    fill(255 - heatTint * 0.5);
-    noStroke();
-    rect(-8, -4, 12, 3);
-
-    // Krypton ion thruster ports (small circles at back)
-    fill(80 + heatTint);
-    stroke(60 + heatTint);
-    strokeWeight(1);
-    ellipse(-10, -3, 4, 4);
-    ellipse(-10, 3, 4, 4);
+    ellipse(0, 0, 30, 30);
 
     // Hot glow during burnup
     if (burningUp) {
@@ -2949,19 +2906,21 @@ function drawGame() {
         ellipse(0, 0, 70, 70);
     }
 
-    // Plasma torch nozzle (mounted on front)
+    // Torch nozzle
     fill(80 + heatTint);
     stroke(60 + heatTint * 0.5);
-    strokeWeight(1);
-    rect(10, -4, 12, 8);
+    rect(12, -5, 15, 10);
     fill(40 + heatTint);
-    rect(20, -5, 6, 10);
+    rect(25, -6, 5, 12);
 
-    // Star tracker (small sensor on body)
+    // Antenna (may break off during burnup)
     if (panelDamage < 0.7) {
-        fill(30 + heatTint);
+        stroke(150 + heatTint);
+        strokeWeight(1);
+        line(-10, 0, -20, -10);
+        fill(200 + heatTint * 0.3);
         noStroke();
-        ellipse(5, -6, 3, 3);
+        ellipse(-20, -10, 4, 4);
     }
 
     pop();
