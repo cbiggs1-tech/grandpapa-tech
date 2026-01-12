@@ -1056,6 +1056,7 @@ function updateUI() {
 // Game state functions
 function startGame() {
     if (!audioCtx) initAudio();
+    if (!musicPlaying) startMusic();
     gameState = GameState.PLAYING;
     document.getElementById('start-screen').classList.add('hidden');
 }
@@ -1312,6 +1313,9 @@ function setupFireButton() {
 
         // Initialize audio on first touch (required for mobile browsers)
         if (!audioCtx) initAudio();
+
+        // Start music on first touch (required for mobile browsers)
+        if (!musicPlaying) startMusic();
 
         // Also handle game state changes on fire button tap
         if (gameState === GameState.MENU) {
