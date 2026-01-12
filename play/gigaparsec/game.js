@@ -387,27 +387,102 @@ function drawPlayer() {
     ctx.save();
     ctx.translate(player.x, player.y);
 
-    // Main body
-    ctx.fillStyle = player.color;
+    const w = player.width;
+    const h = player.height;
+
+    // Starship-style rocket facing right
+
+    // Engine flames (behind everything)
+    ctx.fillStyle = '#ff6600';
     ctx.beginPath();
-    ctx.moveTo(player.width / 2, 0);
-    ctx.lineTo(-player.width / 2, -player.height / 2);
-    ctx.lineTo(-player.width / 3, 0);
-    ctx.lineTo(-player.width / 2, player.height / 2);
+    ctx.moveTo(-w / 2, -4);
+    ctx.lineTo(-w / 2 - 8 - Math.random() * 12, 0);
+    ctx.lineTo(-w / 2, 4);
     ctx.closePath();
     ctx.fill();
 
-    // Cockpit
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(-5, -3, 10, 6);
-
-    // Engine glow
-    ctx.fillStyle = '#ff6600';
+    // Inner flame (brighter)
+    ctx.fillStyle = '#ffcc00';
     ctx.beginPath();
-    ctx.moveTo(-player.width / 3, -5);
-    ctx.lineTo(-player.width / 2 - Math.random() * 10 - 5, 0);
-    ctx.lineTo(-player.width / 3, 5);
+    ctx.moveTo(-w / 2, -2);
+    ctx.lineTo(-w / 2 - 5 - Math.random() * 6, 0);
+    ctx.lineTo(-w / 2, 2);
     ctx.closePath();
+    ctx.fill();
+
+    // Rear fins (SpaceX style grid fins)
+    ctx.fillStyle = '#666666';
+    // Top fin
+    ctx.beginPath();
+    ctx.moveTo(-w / 2 + 5, -h / 2 - 2);
+    ctx.lineTo(-w / 2 - 3, -h / 2 - 6);
+    ctx.lineTo(-w / 2 - 3, -h / 2 + 2);
+    ctx.lineTo(-w / 2 + 8, -h / 2 + 2);
+    ctx.closePath();
+    ctx.fill();
+    // Bottom fin
+    ctx.beginPath();
+    ctx.moveTo(-w / 2 + 5, h / 2 + 2);
+    ctx.lineTo(-w / 2 - 3, h / 2 + 6);
+    ctx.lineTo(-w / 2 - 3, h / 2 - 2);
+    ctx.lineTo(-w / 2 + 8, h / 2 - 2);
+    ctx.closePath();
+    ctx.fill();
+
+    // Main cylindrical body (stainless steel look)
+    ctx.fillStyle = '#d0d0d0';
+    ctx.beginPath();
+    ctx.moveTo(-w / 2, -h / 2 + 2);
+    ctx.lineTo(w / 4, -h / 2 + 2);
+    ctx.lineTo(w / 4, h / 2 - 2);
+    ctx.lineTo(-w / 2, h / 2 - 2);
+    ctx.closePath();
+    ctx.fill();
+
+    // Body highlight (shiny metal effect)
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(-w / 2, -h / 2 + 3, w * 0.6, 3);
+
+    // Body shadow
+    ctx.fillStyle = '#999999';
+    ctx.fillRect(-w / 2, h / 2 - 5, w * 0.6, 2);
+
+    // Nose cone (rounded Starship style)
+    ctx.fillStyle = '#e0e0e0';
+    ctx.beginPath();
+    ctx.moveTo(w / 4, -h / 2 + 2);
+    ctx.quadraticCurveTo(w / 2 + 5, -h / 4, w / 2 + 8, 0);
+    ctx.quadraticCurveTo(w / 2 + 5, h / 4, w / 4, h / 2 - 2);
+    ctx.closePath();
+    ctx.fill();
+
+    // Nose cone highlight
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.moveTo(w / 4 + 2, -h / 2 + 4);
+    ctx.quadraticCurveTo(w / 2, -h / 6, w / 2 + 4, 0);
+    ctx.lineTo(w / 2, 0);
+    ctx.quadraticCurveTo(w / 2 - 4, -h / 6, w / 4 + 2, -h / 2 + 6);
+    ctx.closePath();
+    ctx.fill();
+
+    // Heat shield tiles pattern (subtle)
+    ctx.strokeStyle = '#aaaaaa';
+    ctx.lineWidth = 0.5;
+    for (let i = -w / 2 + 8; i < w / 4; i += 8) {
+        ctx.beginPath();
+        ctx.moveTo(i, -h / 2 + 3);
+        ctx.lineTo(i, h / 2 - 3);
+        ctx.stroke();
+    }
+
+    // Engine bells at rear
+    ctx.fillStyle = '#444444';
+    ctx.beginPath();
+    ctx.arc(-w / 2 + 2, -3, 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(-w / 2 + 2, 3, 3, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.restore();
