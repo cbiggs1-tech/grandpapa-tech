@@ -1238,40 +1238,85 @@
         // Touch handlers for mobile
         let touchCard = null;
         let touchClone = null;
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let isTouchDragging = false;
 
         function handleTouchStart(e) {
-            e.preventDefault();
             const card = e.currentTarget;
-            gameState.draggedCard = parseInt(card.dataset.index);
-            touchCard = card;
-
-            // Create visual clone
-            touchClone = card.cloneNode(true);
-            touchClone.style.position = 'fixed';
-            touchClone.style.zIndex = '1000';
-            touchClone.style.pointerEvents = 'none';
-            touchClone.style.opacity = '0.9';
-            touchClone.style.transform = 'scale(1.1)';
-            document.body.appendChild(touchClone);
-
             const touch = e.touches[0];
-            touchClone.style.left = (touch.clientX - 40) + 'px';
-            touchClone.style.top = (touch.clientY - 50) + 'px';
+            touchStartX = touch.clientX;
+            touchStartY = touch.clientY;
+            touchCard = card;
+            gameState.draggedCard = parseInt(card.dataset.index);
+            isTouchDragging = false;
 
-            card.classList.add('dragging');
+            // Delay clone creation to distinguish tap from drag
+            card.touchTimeout = setTimeout(() => {
+                isTouchDragging = true;
+                // Create visual clone
+                touchClone = card.cloneNode(true);
+                touchClone.style.position = 'fixed';
+                touchClone.style.zIndex = '1000';
+                touchClone.style.pointerEvents = 'none';
+                touchClone.style.opacity = '0.9';
+                touchClone.style.transform = 'scale(1.1)';
+                touchClone.style.width = card.offsetWidth + 'px';
+                touchClone.style.height = card.offsetHeight + 'px';
+                document.body.appendChild(touchClone);
+                touchClone.style.left = (touch.clientX - card.offsetWidth/2) + 'px';
+                touchClone.style.top = (touch.clientY - card.offsetHeight/2) + 'px';
+                card.classList.add('dragging');
+                vibrate(50);
+            }, 150);
         }
 
-        function handleTouchMove(e) {
-            if (!touchClone) return;
+        // Global touch move handler for smooth dragging
+        document.addEventListener('touchmove', (e) => {
+            if (!touchClone || !isTouchDragging) return;
             e.preventDefault();
 
             const touch = e.touches[0];
-            touchClone.style.left = (touch.clientX - 40) + 'px';
-            touchClone.style.top = (touch.clientY - 50) + 'px';
-        }
+            touchClone.style.left = (touch.clientX - touchClone.offsetWidth/2) + 'px';
+            touchClone.style.top = (touch.clientY - touchClone.offsetHeight/2) + 'px';
 
-        function handleTouchEnd(e) {
-            if (!touchClone || !touchCard) return;
+            // Highlight slot under finger
+            const slots = document.querySelectorAll('.timeline-slot.ready');
+            slots.forEach(slot => {
+                const rect = slot.getBoundingClientRect();
+                if (touch.clientX >= rect.left && touch.clientX <= rect.right &&
+                    touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
+                    slot.style.transform = 'scale(1.1)';
+                    slot.style.borderColor = 'var(--gold)';
+                } else {
+                    slot.style.transform = '';
+                    slot.style.borderColor = '';
+                }
+            });
+        }, { passive: false });
+
+        // Global touch end handler
+        document.addEventListener('touchend', (e) => {
+            if (!touchCard) return;
+
+            // Clear timeout if touch ended quickly (was a tap, not drag)
+            if (touchCard.touchTimeout) {
+                clearTimeout(touchCard.touchTimeout);
+                touchCard.touchTimeout = null;
+            }
+
+            // Reset slot highlights
+            const slots = document.querySelectorAll('.timeline-slot');
+            slots.forEach(slot => {
+                slot.style.transform = '';
+                slot.style.borderColor = '';
+            });
+
+            if (!touchClone || !isTouchDragging) {
+                touchCard = null;
+                gameState.draggedCard = null;
+                return;
+            }
 
             const touch = e.changedTouches[0];
             touchClone.remove();
@@ -1279,7 +1324,6 @@
             touchCard.classList.remove('dragging');
 
             // Find slot under touch
-            const slots = document.querySelectorAll('.timeline-slot');
             slots.forEach(slot => {
                 const rect = slot.getBoundingClientRect();
                 if (touch.clientX >= rect.left && touch.clientX <= rect.right &&
@@ -1290,7 +1334,17 @@
             });
 
             touchCard = null;
+            isTouchDragging = false;
             gameState.draggedCard = null;
+        });
+
+        // Legacy handler kept for compatibility
+        function handleTouchMove(e) {
+            // Handled by global listener now
+        }
+
+        function handleTouchEnd(e) {
+            // Handled by global listener now
         }
 
         // Attempt to place card
