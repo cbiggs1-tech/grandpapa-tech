@@ -2309,7 +2309,7 @@ function updateGame() {
             satellite.angle += angleDiff * 0.12;
 
             // Apply thrust proportional to joystick push
-            let thrustAmount = joystickMagnitude * satellite.thrustPower * 0.8;
+            let thrustAmount = joystickMagnitude * satellite.thrustPower * 0.4;
             satellite.vx += cos(targetAngle) * thrustAmount;
             satellite.vy += sin(targetAngle) * thrustAmount;
 
