@@ -1531,17 +1531,22 @@
             const sign = remaining < 0 ? '-' : '';
             timerEl.textContent = `⏱ ${sign}${minutes}:${seconds.toString().padStart(2, '0')}`;
 
-            // Flash warning when under 30 seconds or over time limit
+            // Flash warning when under 30 seconds, stop flashing when over limit
             if (remaining < 0) {
-                // Over time limit - flash red continuously
-                timerEl.classList.add('warning');
-                timerEl.classList.remove('bonus-eligible');
+                // Over time limit - solid red (no flashing)
+                timerEl.classList.remove('warning', 'bonus-eligible');
+                timerEl.style.color = '#ff4444';
+                timerEl.style.borderColor = '#ff4444';
             } else if (remaining <= 30) {
                 // Under 30 seconds - flash warning
+                timerEl.style.color = '';
+                timerEl.style.borderColor = '';
                 timerEl.classList.add('warning');
                 timerEl.classList.remove('bonus-eligible');
             } else {
                 // On track for bonus - show green
+                timerEl.style.color = '';
+                timerEl.style.borderColor = '';
                 timerEl.classList.remove('warning');
                 timerEl.classList.add('bonus-eligible');
             }
