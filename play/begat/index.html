@@ -1608,6 +1608,16 @@
             const timeLimit = level.timeLimit;
             const remaining = timeLimit - gameState.elapsedSeconds;
 
+            // Stop timer at -30 minutes (1800 seconds past the limit)
+            if (remaining <= -1800) {
+                stopTimer();
+                timerEl.textContent = `⏱ -30:00`;
+                timerEl.classList.remove('warning', 'bonus-eligible');
+                timerEl.style.color = '#ff4444';
+                timerEl.style.borderColor = '#ff4444';
+                return;
+            }
+
             // Format time - show negative if over limit
             const absRemaining = Math.abs(remaining);
             const minutes = Math.floor(absRemaining / 60);
