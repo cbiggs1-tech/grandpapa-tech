@@ -99,6 +99,35 @@
             color: var(--gold);
         }
 
+        /* Timer display */
+        .timer-display {
+            font-family: 'Courier New', monospace;
+            font-size: 1.3rem;
+            color: var(--gold);
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.3rem 0.8rem;
+            border-radius: 8px;
+            border: 2px solid var(--gold);
+            margin-top: 0.5rem;
+            display: inline-block;
+        }
+
+        .timer-display.warning {
+            animation: timer-flash 0.5s ease-in-out infinite;
+            border-color: #ff4444;
+            color: #ff4444;
+        }
+
+        @keyframes timer-flash {
+            0%, 100% { opacity: 1; background: rgba(255, 68, 68, 0.2); }
+            50% { opacity: 0.6; background: rgba(255, 68, 68, 0.4); }
+        }
+
+        .timer-display.bonus-eligible {
+            color: #4aff4a;
+            border-color: #4aff4a;
+        }
+
         /* Main game area */
         .game-container {
             flex: 1;
@@ -636,6 +665,110 @@
             font-weight: bold;
         }
 
+        .win-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .win-camera-btn {
+            padding: 0.8rem 1.2rem;
+            font-size: 1.5rem;
+            background: var(--parchment-dark);
+            color: var(--ink);
+            border: 2px solid var(--gold);
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .win-camera-btn:hover {
+            background: var(--gold);
+        }
+
+        /* High Scores Section */
+        .high-scores {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            border: 1px solid var(--gold);
+        }
+
+        .high-scores h3 {
+            color: var(--gold);
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .high-scores-list {
+            list-style: none;
+            font-size: 0.9rem;
+            color: var(--ink);
+        }
+
+        .high-scores-list li {
+            padding: 0.3rem 0;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .high-scores-list .rank {
+            color: var(--gold);
+            font-weight: bold;
+            width: 1.5rem;
+        }
+
+        .high-scores-list .name {
+            flex: 1;
+            text-align: left;
+            margin-left: 0.5rem;
+        }
+
+        .high-scores-list .score {
+            font-weight: bold;
+        }
+
+        /* Name Entry */
+        .name-entry {
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .name-entry.active {
+            display: block;
+        }
+
+        .name-entry label {
+            display: block;
+            color: var(--gold);
+            margin-bottom: 0.3rem;
+            font-size: 0.9rem;
+        }
+
+        .name-entry input {
+            padding: 0.5rem;
+            font-size: 1rem;
+            border: 2px solid var(--gold);
+            border-radius: 5px;
+            background: var(--parchment);
+            color: var(--ink);
+            width: 150px;
+            text-align: center;
+        }
+
+        .name-entry button {
+            margin-left: 0.5rem;
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            background: var(--gold);
+            color: var(--ink);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
         /* Accessibility speaker button */
         .speak-btn {
             background: var(--gold);
@@ -1096,6 +1229,7 @@
             <span id="scoreDisplay">Score: 0</span>
             <span id="starsDisplay">Stars: 0</span>
         </div>
+        <div class="timer-display" id="timerDisplay">⏱ 3:00</div>
     </header>
 
     <div class="level-indicator" id="levelIndicator">Level 1: Patriarchs</div>
@@ -1160,7 +1294,28 @@
             <h2 class="win-title">Behold the Lineage!</h2>
             <p class="win-subtitle">You've connected the generations from Abraham to Jesus!</p>
             <p class="win-score" id="finalScore">Final Score: 0</p>
-            <button class="win-btn" id="playAgainBtn">Play Again</button>
+
+            <!-- Name Entry for High Score -->
+            <div class="name-entry" id="nameEntry">
+                <label>New High Score! Enter your name:</label>
+                <input type="text" id="playerNameInput" maxlength="12" placeholder="Your Name">
+                <button id="saveScoreBtn">Save</button>
+            </div>
+
+            <!-- High Scores Display -->
+            <div class="high-scores" id="highScoresSection">
+                <h3>🏆 Top Scores - Level <span id="highScoreLevel">1</span></h3>
+                <ul class="high-scores-list" id="highScoresList">
+                    <li><span class="rank">1.</span><span class="name">---</span><span class="score">0</span></li>
+                    <li><span class="rank">2.</span><span class="name">---</span><span class="score">0</span></li>
+                    <li><span class="rank">3.</span><span class="name">---</span><span class="score">0</span></li>
+                </ul>
+            </div>
+
+            <div class="win-buttons">
+                <button class="win-camera-btn" id="winCameraBtn" title="Take Screenshot">📷</button>
+                <button class="win-btn" id="playAgainBtn">Play Again</button>
+            </div>
         </div>
     </div>
 
@@ -1243,12 +1398,12 @@
             { name: "Jesus", desc: ["Son of Joseph (legally), the Christ (Matt 1:16-17)", "Born in Bethlehem, fulfilled prophecies (Mic 5:2, Isa 7:14)", "Savior, Emmanuel (Matt 1:21-23)"], icon: "lamb", dates: "~4 BC–AD 30" }
         ];
 
-        // Level configurations
+        // Level configurations with time limits (in seconds)
         const levels = [
-            { name: "Patriarchs", start: 0, end: 13, difficulty: "Easy" },
-            { name: "Kings of Judah", start: 14, end: 27, difficulty: "Medium" },
-            { name: "Post-Exile", start: 28, end: 41, difficulty: "Medium" },
-            { name: "Full Lineage", start: 0, end: 41, difficulty: "Hard" }
+            { name: "Patriarchs", start: 0, end: 13, difficulty: "Easy", timeLimit: 180 },      // 3 minutes
+            { name: "Kings of Judah", start: 14, end: 27, difficulty: "Medium", timeLimit: 240 }, // 4 minutes
+            { name: "Post-Exile", start: 28, end: 41, difficulty: "Medium", timeLimit: 300 },   // 5 minutes
+            { name: "Full Lineage", start: 0, end: 41, difficulty: "Hard", timeLimit: 480 }     // 8 minutes
         ];
 
         // Game State
@@ -1268,7 +1423,10 @@
             currentQuizCard: null,
             currentSlotIndex: null,         // The slot being filled (determines correct ancestor)
             draggedCard: null,
-            quizAttempts: 0                 // Track attempts for current quiz
+            quizAttempts: 0,                // Track attempts for current quiz
+            timerStartTime: null,           // When the timer started
+            timerInterval: null,            // Interval ID for timer updates
+            elapsedSeconds: 0               // Time elapsed in current game
         };
 
         // ==============================================
@@ -1322,6 +1480,161 @@
                 }
             }
             return TIER_MULTIPLIERS[TIER_MULTIPLIERS.length - 1];
+        }
+
+        // ==============================================
+        // TIMER SYSTEM
+        // ==============================================
+
+        /**
+         * Start the game timer
+         */
+        function startTimer() {
+            gameState.timerStartTime = Date.now();
+            gameState.elapsedSeconds = 0;
+            updateTimerDisplay();
+
+            // Clear any existing interval
+            if (gameState.timerInterval) {
+                clearInterval(gameState.timerInterval);
+            }
+
+            gameState.timerInterval = setInterval(() => {
+                gameState.elapsedSeconds = Math.floor((Date.now() - gameState.timerStartTime) / 1000);
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        /**
+         * Stop the game timer
+         */
+        function stopTimer() {
+            if (gameState.timerInterval) {
+                clearInterval(gameState.timerInterval);
+                gameState.timerInterval = null;
+            }
+        }
+
+        /**
+         * Update timer display with remaining time
+         */
+        function updateTimerDisplay() {
+            const timerEl = document.getElementById('timerDisplay');
+            const level = levels[gameState.currentLevel];
+            const timeLimit = level.timeLimit;
+            const remaining = Math.max(0, timeLimit - gameState.elapsedSeconds);
+
+            const minutes = Math.floor(remaining / 60);
+            const seconds = remaining % 60;
+            timerEl.textContent = `⏱ ${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+            // Flash warning when under 30 seconds
+            if (remaining <= 30 && remaining > 0) {
+                timerEl.classList.add('warning');
+                timerEl.classList.remove('bonus-eligible');
+            } else if (remaining > 0 && gameState.elapsedSeconds < timeLimit) {
+                timerEl.classList.remove('warning');
+                // Show green when still eligible for speed bonus
+                timerEl.classList.add('bonus-eligible');
+            } else {
+                timerEl.classList.remove('warning', 'bonus-eligible');
+            }
+        }
+
+        /**
+         * Check if completed within time limit for speed bonus
+         */
+        function getSpeedBonus() {
+            const level = levels[gameState.currentLevel];
+            if (gameState.elapsedSeconds <= level.timeLimit) {
+                return 0.2; // 20% bonus
+            }
+            return 0;
+        }
+
+        /**
+         * Format elapsed time as MM:SS
+         */
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // ==============================================
+        // HIGH SCORES SYSTEM
+        // ==============================================
+
+        /**
+         * Get high scores for a specific level
+         */
+        function getHighScores(levelIndex) {
+            const key = `begat_highscores_level_${levelIndex}`;
+            const stored = localStorage.getItem(key);
+            if (stored) {
+                return JSON.parse(stored);
+            }
+            return [];
+        }
+
+        /**
+         * Save high scores for a specific level
+         */
+        function saveHighScores(levelIndex, scores) {
+            const key = `begat_highscores_level_${levelIndex}`;
+            localStorage.setItem(key, JSON.stringify(scores));
+        }
+
+        /**
+         * Check if score qualifies for top 3
+         */
+        function isHighScore(levelIndex, score) {
+            const scores = getHighScores(levelIndex);
+            if (scores.length < 3) return true;
+            return score > scores[scores.length - 1].score;
+        }
+
+        /**
+         * Add a new high score
+         */
+        function addHighScore(levelIndex, name, score) {
+            const scores = getHighScores(levelIndex);
+            scores.push({ name: name || 'Anonymous', score: score });
+            scores.sort((a, b) => b.score - a.score);
+            if (scores.length > 3) scores.length = 3;
+            saveHighScores(levelIndex, scores);
+            return scores;
+        }
+
+        /**
+         * Display high scores in the win modal
+         */
+        function displayHighScores(levelIndex) {
+            const scores = getHighScores(levelIndex);
+            document.getElementById('highScoreLevel').textContent = levelIndex + 1;
+
+            const list = document.getElementById('highScoresList');
+            list.innerHTML = '';
+
+            for (let i = 0; i < 3; i++) {
+                const li = document.createElement('li');
+                const rank = document.createElement('span');
+                rank.className = 'rank';
+                rank.textContent = `${i + 1}.`;
+
+                const name = document.createElement('span');
+                name.className = 'name';
+                name.textContent = scores[i] ? scores[i].name : '---';
+
+                const scoreSpan = document.createElement('span');
+                scoreSpan.className = 'score';
+                scoreSpan.textContent = scores[i] ? scores[i].score : '0';
+
+                li.appendChild(rank);
+                li.appendChild(name);
+                li.appendChild(scoreSpan);
+                list.appendChild(li);
+            }
         }
 
         /**
@@ -1615,6 +1928,9 @@
             renderTimeline();
             renderCardPool();
             updateDisplay();
+
+            // Start the timer
+            startTimer();
         }
 
         // Render timeline slots
@@ -2084,7 +2400,13 @@
                     playWin();
                     vibrate([100, 50, 100, 50, 200]);
 
-                    // Build detailed score breakdown
+                    // Build detailed score breakdown with time and speed bonus
+                    const timeDisplay = formatTime(completionResult.elapsedTime);
+                    const timeLimitDisplay = formatTime(completionResult.timeLimit);
+                    const speedBonusLine = completionResult.underTimeLimit
+                        ? `<div style="color: #4aff4a;">⚡ Speed Bonus (+20%): +${completionResult.speedBonus}</div>`
+                        : `<div style="color: #888;">Time: ${timeDisplay} (limit: ${timeLimitDisplay})</div>`;
+
                     const finalScoreEl = document.getElementById('finalScore');
                     finalScoreEl.innerHTML = `
                         <div style="text-align: center;">
@@ -2092,11 +2414,25 @@
                             <div>Base Score: ${completionResult.baseScore}</div>
                             <div>Multiplier (${completionResult.netMistakes} mistakes): ×${completionResult.multiplier}</div>
                             <div>Completion Bonus: +${completionResult.completionBonus}</div>
+                            ${speedBonusLine}
                             <div style="font-size: 1.5rem; margin-top: 10px; color: var(--gold);">
                                 Final Score: ${completionResult.finalScore}
                             </div>
                         </div>
                     `;
+
+                    // Check for high score and show name entry if qualified
+                    const nameEntry = document.getElementById('nameEntry');
+                    if (isHighScore(gameState.currentLevel, completionResult.finalScore)) {
+                        nameEntry.classList.add('active');
+                        document.getElementById('playerNameInput').value = '';
+                        document.getElementById('playerNameInput').focus();
+                    } else {
+                        nameEntry.classList.remove('active');
+                    }
+
+                    // Display current high scores
+                    displayHighScores(gameState.currentLevel);
 
                     document.getElementById('winModal').classList.add('active');
                     speak(`${completionResult.tierLabel}! Final score: ${completionResult.finalScore}`);
@@ -2106,9 +2442,12 @@
         }
 
         /**
-         * Calculate final score with tier multipliers and completion bonus
+         * Calculate final score with tier multipliers, completion bonus, and speed bonus
          */
         function calculateLevelCompletion() {
+            // Stop the timer
+            stopTimer();
+
             const baseScore = gameState.score;
             const netMistakes = gameState.mistakes;
             const tier = getTierMultiplier(netMistakes);
@@ -2120,7 +2459,13 @@
             // Add completion bonus (20% of theoretical max)
             const completionBonus = Math.floor(maxScore * 0.2);
 
-            const finalScore = multipliedScore + completionBonus;
+            // Check for speed bonus (20% if completed under time limit)
+            const speedBonusPercent = getSpeedBonus();
+            const level = levels[gameState.currentLevel];
+            const underTimeLimit = gameState.elapsedSeconds <= level.timeLimit;
+            const speedBonus = Math.floor(multipliedScore * speedBonusPercent);
+
+            const finalScore = multipliedScore + completionBonus + speedBonus;
 
             // Update gameState with final score
             gameState.score = finalScore;
@@ -2131,6 +2476,10 @@
                 multiplier: tier.multiplier,
                 tierLabel: tier.label,
                 completionBonus: completionBonus,
+                speedBonus: speedBonus,
+                underTimeLimit: underTimeLimit,
+                elapsedTime: gameState.elapsedSeconds,
+                timeLimit: level.timeLimit,
                 finalScore: finalScore
             };
         }
@@ -2240,6 +2589,57 @@
         document.getElementById('playAgainBtn').addEventListener('click', () => {
             document.getElementById('winModal').classList.remove('active');
             initGame(); // initGame handles all state resets
+        });
+
+        // Save high score button
+        document.getElementById('saveScoreBtn').addEventListener('click', () => {
+            const nameInput = document.getElementById('playerNameInput');
+            const name = nameInput.value.trim() || 'Anonymous';
+            addHighScore(gameState.currentLevel, name, gameState.score);
+            displayHighScores(gameState.currentLevel);
+            document.getElementById('nameEntry').classList.remove('active');
+        });
+
+        // Allow Enter key to save score
+        document.getElementById('playerNameInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('saveScoreBtn').click();
+            }
+        });
+
+        // Camera button on win modal - takes screenshot
+        document.getElementById('winCameraBtn').addEventListener('click', async () => {
+            try {
+                // Hide the win modal temporarily for clean screenshot
+                const winModal = document.getElementById('winModal');
+                winModal.style.display = 'none';
+
+                // Use html2canvas if available, otherwise use existing share mechanism
+                if (typeof html2canvas !== 'undefined') {
+                    const canvas = await html2canvas(document.body, {
+                        backgroundColor: '#1a1a2e',
+                        scale: 2
+                    });
+
+                    // Show modal again
+                    winModal.style.display = '';
+
+                    // Create download link
+                    const link = document.createElement('a');
+                    link.download = `begat-score-${gameState.score}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                } else {
+                    // Fallback - trigger the share modal
+                    winModal.style.display = '';
+                    document.getElementById('shareBtn').click();
+                }
+            } catch (err) {
+                console.error('Screenshot failed:', err);
+                // Fallback to share modal
+                document.getElementById('winModal').style.display = '';
+                document.getElementById('shareBtn').click();
+            }
         });
 
         // PWA Install prompt
