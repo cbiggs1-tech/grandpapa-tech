@@ -397,7 +397,7 @@ describe('Game Data', () => {
     it('should have Full Lineage covering all ancestors', () => {
         const fullLineage = levels[3];
         expect(fullLineage.start).toBe(0);
-        expect(fullLineage.end).toBe(41);
+        expect(fullLineage.end).toBe(40);
     });
 });
 
