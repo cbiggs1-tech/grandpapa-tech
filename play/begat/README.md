@@ -117,6 +117,23 @@ All interactive elements include descriptive ARIA labels:
 - Safari 13+
 - Edge 80+
 
+## Security
+
+### Content Security Policy (CSP)
+The game includes a strict CSP meta tag with the following policies:
+- `default-src 'self'` - Only load resources from same origin
+- `script-src` - Allows self, Google Analytics/Tag Manager, and html2canvas CDN
+- `style-src 'self' 'unsafe-inline'` - Required for dynamic CSS and inline styles
+- `img-src 'self' data: blob:` - For screenshots and data URLs
+- `media-src 'self'` - For audio files
+- `connect-src` - For Google Analytics
+
+**Note on `'unsafe-inline'`**: The CSP includes `'unsafe-inline'` for scripts and styles because:
+1. Google Analytics requires inline script initialization (`gtag()` calls)
+2. Dynamic styling is used for game elements (tooltips, drag previews)
+
+Removing `'unsafe-inline'` would require significant refactoring (nonce-based CSP or moving all scripts to external files), which is tracked as a future enhancement.
+
 ## License
 
 Part of GRANDPAPA.NET - Educational biblical games

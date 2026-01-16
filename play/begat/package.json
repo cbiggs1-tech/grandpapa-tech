@@ -11,6 +11,8 @@
     "test:e2e:open": "cypress open",
     "lint": "eslint js/**/*.js tests/**/*.js",
     "lint:fix": "eslint js/**/*.js tests/**/*.js --fix",
+    "format": "prettier --write \"**/*.{js,css,html,md,json}\"",
+    "format:check": "prettier --check \"**/*.{js,css,html,md,json}\"",
     "serve": "npx serve ."
   },
   "devDependencies": {

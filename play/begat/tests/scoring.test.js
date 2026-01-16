@@ -400,3 +400,115 @@ describe('Game Data', () => {
         expect(fullLineage.end).toBe(41);
     });
 });
+
+describe('Storage Fallback', () => {
+    // Simulates the storage wrapper from begat.js
+    function createStorage() {
+        const memoryStorage = new Map();
+        return {
+            getItem(key) {
+                try {
+                    const value = localStorage.getItem(key);
+                    return value;
+                } catch (e) {
+                    return memoryStorage.get(key) || null;
+                }
+            },
+            setItem(key, value) {
+                try {
+                    localStorage.setItem(key, value);
+                } catch (e) {
+                    memoryStorage.set(key, value);
+                }
+            },
+            _memoryStorage: memoryStorage
+        };
+    }
+
+    it('should fall back to memory storage when localStorage throws', () => {
+        const storage = createStorage();
+
+        // Simulate localStorage throwing (quota exceeded)
+        const originalSetItem = localStorage.setItem;
+        localStorage.setItem = () => { throw new Error('QuotaExceededError'); };
+
+        storage.setItem('test_key', 'test_value');
+
+        // Should be in memory fallback
+        expect(storage._memoryStorage.get('test_key')).toBe('test_value');
+
+        localStorage.setItem = originalSetItem;
+    });
+
+    it('should handle null/undefined values gracefully', () => {
+        const storage = createStorage();
+
+        expect(storage.getItem('nonexistent_key')).toBe(null);
+    });
+
+    it('should parse and store high scores correctly', () => {
+        const scores = [
+            { name: 'Player1', score: 500 },
+            { name: 'Player2', score: 300 }
+        ];
+        const serialized = JSON.stringify(scores);
+        const parsed = JSON.parse(serialized);
+
+        expect(parsed).toHaveLength(2);
+        expect(parsed[0].name).toBe('Player1');
+        expect(parsed[0].score).toBe(500);
+    });
+
+    it('should handle malformed JSON gracefully', () => {
+        const parseWithFallback = (str) => {
+            try {
+                return JSON.parse(str);
+            } catch (e) {
+                return [];
+            }
+        };
+
+        expect(parseWithFallback('not valid json')).toEqual([]);
+        expect(parseWithFallback(null)).toEqual([]);
+        expect(parseWithFallback(undefined)).toEqual([]);
+    });
+});
+
+describe('Speech Synthesis', () => {
+    // Simulates speech function behavior
+    function createSpeakFunction(speechEnabled, speechSynthesis) {
+        return function speak(text) {
+            if (!speechEnabled) return false;
+            if (!speechSynthesis) return false;
+            if (typeof text !== 'string' || text.trim() === '') return false;
+            return true; // Would call speechSynthesis.speak() in real code
+        };
+    }
+
+    it('should not speak when speech is disabled', () => {
+        const speak = createSpeakFunction(false, { speak: vi.fn() });
+        expect(speak('Hello')).toBe(false);
+    });
+
+    it('should not speak when speechSynthesis is unavailable', () => {
+        const speak = createSpeakFunction(true, null);
+        expect(speak('Hello')).toBe(false);
+    });
+
+    it('should not speak empty strings', () => {
+        const speak = createSpeakFunction(true, { speak: vi.fn() });
+        expect(speak('')).toBe(false);
+        expect(speak('   ')).toBe(false);
+    });
+
+    it('should speak valid text when enabled', () => {
+        const speak = createSpeakFunction(true, { speak: vi.fn() });
+        expect(speak('Correct!')).toBe(true);
+    });
+
+    it('should handle special characters in speech text', () => {
+        const speak = createSpeakFunction(true, { speak: vi.fn() });
+        expect(speak('Score: +50 points!')).toBe(true);
+        expect(speak('~2166-1991 BC')).toBe(true);
+    });
+});

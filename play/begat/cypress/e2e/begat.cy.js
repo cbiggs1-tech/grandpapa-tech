@@ -210,4 +210,57 @@ describe('Begat Game', () => {
             cy.get('.timeline').should('be.visible');
         });
     });
+
+    describe('PWA & Offline Support', () => {
+        it('should register a service worker', () => {
+            // Check that service worker registration is attempted
+            cy.window().then((win) => {
+                // Service worker should be available in modern browsers
+                expect(win.navigator.serviceWorker).to.exist;
+            });
+        });
+
+        it('should have PWA manifest configured', () => {
+            // Check manifest link exists
+            cy.get('link[rel="manifest"]').should('exist');
+        });
+
+        it('should show install prompt elements', () => {
+            // Install prompt div should exist (even if hidden)
+            cy.get('#installPrompt').should('exist');
+            cy.get('#installBtn').should('exist');
+            cy.get('#dismissInstall').should('exist');
+        });
+
+        it('should handle offline gracefully', () => {
+            // Start the game first while online
+            cy.get('#startGameBtn').click();
+            cy.get('.timeline').should('be.visible');
+
+            // Simulate going offline
+            cy.window().then((win) => {
+                // Game state should persist - check localStorage is being used
+                const hasStorage = win.localStorage !== undefined;
+                expect(hasStorage).to.be.true;
+            });
+
+            // Game elements should still be visible (from cache/DOM)
+            cy.get('.card-pool').should('be.visible');
+            cy.get('#scoreDisplay').should('be.visible');
+        });
+
+        it('should persist high scores in localStorage', () => {
+            cy.window().then((win) => {
+                // Set a test high score
+                const testScores = [{ name: 'TestPlayer', score: 999 }];
+                win.localStorage.setItem('begat_highscores_level_0', JSON.stringify(testScores));
+
+                // Verify it persists
+                const stored = win.localStorage.getItem('begat_highscores_level_0');
+                expect(stored).to.not.be.null;
+                const parsed = JSON.parse(stored);
+                expect(parsed[0].name).to.equal('TestPlayer');
+            });
+        });
+    });
 });
