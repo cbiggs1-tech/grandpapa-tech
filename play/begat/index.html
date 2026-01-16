@@ -1416,8 +1416,12 @@
         <button class="dismiss-btn" id="dismissInstall">Not Now</button>
     </div>
 
-    <!-- Background Music -->
-    <audio id="bgMusic" loop>
+    <!-- Background Music - Start Screen -->
+    <audio id="startMusic" loop>
+        <source src="../../music/Lineage.mp3" type="audio/mpeg">
+    </audio>
+    <!-- Background Music - Gameplay -->
+    <audio id="gameMusic" loop>
         <source src="../../music/Ancestry.mp3" type="audio/mpeg">
     </audio>
     <button id="musicToggle" class="music-btn">MUSIC: ON</button>
@@ -1921,11 +1925,14 @@
             hideDateTooltip();
         }
 
-        // Touch handlers for tooltip on mobile - show immediately on touch
+        // Touch handlers for tooltip on mobile - show after 200ms touch
         function handleTouchStartForTooltip(e, personIndex) {
             const touch = e.touches[0];
-            // Show tooltip immediately on touch
-            showDateTooltip(e.currentTarget, personIndex, touch.clientX, touch.clientY);
+            const element = e.currentTarget;
+            // Show tooltip after 200ms delay
+            setTimeout(() => {
+                showDateTooltip(element, personIndex, touch.clientX, touch.clientY);
+            }, 200);
         }
 
         function handleTouchEndForTooltip() {
@@ -2054,6 +2061,8 @@
             document.getElementById('startScreen').classList.add('hidden');
             startTimer();
             initAudio();
+            // Switch to gameplay music
+            switchToGameplayMusic();
         }
 
         // Show start screen with current level info
@@ -2068,6 +2077,8 @@
             document.getElementById('startTimeLimit').textContent =
                 `Time Limit: ${minutes}:${seconds.toString().padStart(2, '0')}`;
             document.getElementById('startScreen').classList.remove('hidden');
+            // Switch back to start screen music
+            switchToStartMusic();
         }
 
         // Render timeline slots
@@ -2168,18 +2179,15 @@
                     nameDiv.textContent = person.name;
                     card.appendChild(nameDiv);
 
-                    // Drag events
+                    // Drag events (includes tooltip showing after 200ms touch)
                     card.addEventListener('dragstart', handleDragStart);
                     card.addEventListener('dragend', handleDragEnd);
                     card.addEventListener('touchstart', handleTouchStart, { passive: false });
+                    card.addEventListener('touchend', handleTouchEndForTooltip, { passive: true });
 
                     // Add tooltip events for date display (mouse hover)
                     card.addEventListener('mouseenter', (e) => handleMouseEnterForTooltip(e, idx));
                     card.addEventListener('mouseleave', handleMouseLeaveForTooltip);
-
-                    // Touch tooltip events for mobile (long press shows tooltip)
-                    card.addEventListener('touchstart', (e) => handleTouchStartForTooltip(e, idx), { passive: true });
-                    card.addEventListener('touchend', handleTouchEndForTooltip, { passive: true });
                 } else {
                     card.classList.add('locked');
 
@@ -2374,12 +2382,19 @@
             gameState.draggedCard = parseInt(card.dataset.index);
             isTouchDragging = false;
 
-            // Hide any visible tooltip when starting to drag
-            hideDateTooltip();
+            // Show tooltip immediately on touch (200ms delay per user request)
+            const personIndex = parseInt(card.dataset.index);
+            setTimeout(() => {
+                if (!isTouchDragging) { // Only show if not already dragging
+                    showDateTooltip(card, personIndex, touch.clientX, touch.clientY);
+                }
+            }, 200);
 
             // Delay clone creation to distinguish tap from drag
             card.touchTimeout = setTimeout(() => {
                 isTouchDragging = true;
+                // Hide tooltip when drag actually starts
+                hideDateTooltip();
                 // Create visual clone
                 touchClone = card.cloneNode(true);
                 touchClone.style.position = 'fixed';
@@ -2807,12 +2822,15 @@
             document.getElementById('installPrompt').classList.remove('visible');
         });
 
-        // Background Music Control
-        const bgMusic = document.getElementById('bgMusic');
+        // Background Music Control - Two tracks: Start screen and Gameplay
+        const startMusic = document.getElementById('startMusic');
+        const gameMusic = document.getElementById('gameMusic');
         const musicBtn = document.getElementById('musicToggle');
-        bgMusic.volume = 0.4;
+        startMusic.volume = 0.4;
+        gameMusic.volume = 0.4;
 
         let musicAutoplayBlocked = false;
+        let musicEnabled = true; // Track if user wants music on
 
         function updateMusicButtonState(playing) {
             if (playing) {
@@ -2824,8 +2842,35 @@
             }
         }
 
-        // Try to play music on page load
-        bgMusic.play().then(() => {
+        // Get current active music track based on game state
+        function getCurrentMusic() {
+            return gameState.gameStarted ? gameMusic : startMusic;
+        }
+
+        // Switch from start music to gameplay music
+        function switchToGameplayMusic() {
+            if (musicEnabled && !startMusic.paused) {
+                startMusic.pause();
+                gameMusic.currentTime = 0;
+                gameMusic.play().catch(() => {});
+            } else if (musicEnabled && startMusic.paused && musicAutoplayBlocked) {
+                // Music was blocked but user wanted it on
+                gameMusic.currentTime = 0;
+                gameMusic.play().catch(() => {});
+            }
+        }
+
+        // Switch from gameplay music to start music (for new game)
+        function switchToStartMusic() {
+            if (musicEnabled) {
+                gameMusic.pause();
+                startMusic.currentTime = 0;
+                startMusic.play().catch(() => {});
+            }
+        }
+
+        // Try to play start music on page load
+        startMusic.play().then(() => {
             updateMusicButtonState(true);
         }).catch(() => {
             musicAutoplayBlocked = true;
@@ -2835,8 +2880,8 @@
         // If autoplay was blocked, start music on first user interaction
         document.addEventListener('click', function startMusicOnInteraction(e) {
             if (e.target === musicBtn) return;
-            if (musicAutoplayBlocked) {
-                bgMusic.play().then(() => {
+            if (musicAutoplayBlocked && musicEnabled) {
+                getCurrentMusic().play().then(() => {
                     musicAutoplayBlocked = false;
                     updateMusicButtonState(true);
                 });
@@ -2844,13 +2889,17 @@
         }, { once: true });
 
         musicBtn.addEventListener('click', () => {
-            if (bgMusic.paused) {
-                bgMusic.play();
+            const currentMusic = getCurrentMusic();
+            if (currentMusic.paused) {
+                currentMusic.play();
                 updateMusicButtonState(true);
+                musicEnabled = true;
                 musicAutoplayBlocked = false;
             } else {
-                bgMusic.pause();
+                startMusic.pause();
+                gameMusic.pause();
                 updateMusicButtonState(false);
+                musicEnabled = false;
             }
         });
 
